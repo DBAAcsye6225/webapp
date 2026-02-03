@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -353,6 +354,14 @@ class WebappApplicationTests {
                 .contentType(MediaType.TEXT_PLAIN)
                 .content("{\"first_name\":\"Test\"}"))
                 .andExpect(status().isUnsupportedMediaType());
+    }
+
+     // ==================== Demo: Intentional Failure ====================
+    @Test
+    @Order(27)
+    @DisplayName("Demo: Intentional test failure to demonstrate branch protection")
+    void testIntentionalFailureForDemo() {
+        fail("This test intentionally fails to demonstrate that CI/CD prevents merging failed tests");
     }
 
     // Helper method for Basic Auth
