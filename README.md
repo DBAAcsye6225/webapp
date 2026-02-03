@@ -398,4 +398,4 @@ This project is developed for educational purposes as part of the **CSYE6225 - N
 
 - Course instructors and TAs for guidance and requirements
 - Spring Boot documentation and community
-- GitHub Actions for CI/CD platform# Assignment 2 - Integration Tests
+- GitHub Actions for CI/CD platform
