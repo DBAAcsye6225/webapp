@@ -357,12 +357,12 @@ class WebappApplicationTests {
     }
 
      // ==================== Demo: Intentional Failure ====================
-    @Test
-    @Order(27)
-    @DisplayName("Demo: Intentional test failure to demonstrate branch protection")
-    void testIntentionalFailureForDemo() {
-        fail("This test intentionally fails to demonstrate that CI/CD prevents merging failed tests");
-    }
+    // @Test
+    // @Order(27)
+    // @DisplayName("Demo: Intentional test failure to demonstrate branch protection")
+    // void testIntentionalFailureForDemo() {
+    //     fail("This test intentionally fails to demonstrate that CI/CD prevents merging failed tests");
+    // }
 
     // Helper method for Basic Auth
     private String getBasicAuthHeader(String username, String password) {
