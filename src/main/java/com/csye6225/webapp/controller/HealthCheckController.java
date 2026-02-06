@@ -60,7 +60,7 @@ public class HealthCheckController {
     }
     
     @RequestMapping(value = "/healthz", method = {RequestMethod.POST, RequestMethod.PUT, 
-                    RequestMethod.DELETE, RequestMethod.PATCH})
+                    RequestMethod.DELETE, RequestMethod.PATCH, RequestMethod.HEAD, RequestMethod.OPTIONS})
     public ResponseEntity<Void> healthCheckNotAllowed() {
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
                 .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate")
