@@ -8,16 +8,16 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest 
     
     services:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: webapp_test
-          MYSQL_USER: test
-          MYSQL_PASSWORD: test
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+          MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+          MYSQL_USER: ${{ secrets.MYSQL_USER }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
         ports:
           - 3306:3306
         options: >-
@@ -40,7 +40,7 @@ jobs:
     - name: Wait for MySQL
       run: |
         for i in {1..30}; do
-          if mysqladmin ping -h"127.0.0.1" -P3306 -uroot -proot --silent; then
+          if mysqladmin ping -h"127.0.0.1" -P3306 -u${{ secrets.MYSQL_ROOT_USER }} -p${{ secrets.MYSQL_ROOT_PASSWORD }} --silent; then
             echo "MySQL is ready"
             break
           fi
@@ -51,9 +51,9 @@ jobs:
     - name: Run tests
       run: mvn clean test
       env:
-        SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/webapp_test
-        SPRING_DATASOURCE_USERNAME: test
-        SPRING_DATASOURCE_PASSWORD: test
+        SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/${{ secrets.MYSQL_DATABASE }}
+        SPRING_DATASOURCE_USERNAME: ${{ secrets.MYSQL_USER }}
+        SPRING_DATASOURCE_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
         SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
 
     - name: Test Report
