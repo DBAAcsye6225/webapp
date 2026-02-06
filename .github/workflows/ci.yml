@@ -3,6 +3,8 @@ name: CI - Integration Tests
 on:
   pull_request:
     branches: [ main ]
+  push:
+    branches: [ main ]
 
 jobs:
   test:
@@ -49,9 +51,9 @@ jobs:
     - name: Run tests
       run: mvn clean test
       env:
-        SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/webapp_test
-        SPRING_DATASOURCE_USERNAME: test
-        SPRING_DATASOURCE_PASSWORD: test
+        SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
+        SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
+        SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
         SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
 
     - name: Test Report
