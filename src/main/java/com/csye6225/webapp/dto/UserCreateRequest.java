@@ -2,12 +2,17 @@ package com.csye6225.webapp.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class UserCreateRequest {
     
     @Email(message = "Username must be a valid email address")
+    @Pattern(
+        regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+        message = "Username must be a valid email address"
+    )
     @NotBlank(message = "username is required")
     @JsonProperty("username")
     private String username;
