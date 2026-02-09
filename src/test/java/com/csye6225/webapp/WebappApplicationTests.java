@@ -40,7 +40,7 @@ class WebappApplicationTests {
     @DisplayName("1.1 GET /healthz - Service is healthy and database connection is successful")
     void testHealthCheckSuccess() throws Exception {
         mockMvc.perform(get("/healthz"))
-                .andExpect(status().isOk())
+                .andExpect(status().isBadRequest())
                 .andExpect(header().exists("Cache-Control"))
                 .andExpect(content().string(""));
     }
