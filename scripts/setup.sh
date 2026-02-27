@@ -45,6 +45,30 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get install -y openjdk-17-jdk
 java -version
 
 # ---------------------------------------------------------
+# 3. Install MySQL Server
+# ---------------------------------------------------------
+echo "[INFO] Installing MySQL Server..."
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server
+
+# Start and enable MySQL
+echo "[INFO] Starting and enabling MySQL..."
+sudo systemctl start mysql
+sudo systemctl enable mysql
+
+# Wait for MySQL to be ready
+echo "[INFO] Waiting for MySQL to be ready..."
+sleep 5
+
+# Create database and application user
+echo "[INFO] Creating database and application user..."
+sudo mysql -e "CREATE DATABASE IF NOT EXISTS csye6225;"
+sudo mysql -e "CREATE USER IF NOT EXISTS 'csye6225'@'localhost' IDENTIFIED BY 'YourStrongPassword123!';"
+sudo mysql -e "GRANT ALL PRIVILEGES ON csye6225.* TO 'csye6225'@'localhost';"
+sudo mysql -e "FLUSH PRIVILEGES;"
+
+echo "[INFO] MySQL setup completed."
+
+# ---------------------------------------------------------
 # 5. Create Application Group (Idempotent)
 # ---------------------------------------------------------
 echo "[INFO] Creating application group..."

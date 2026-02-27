@@ -1,6 +1,7 @@
 [Unit]
 Description=CSYE 6225 Web Application
-After=network.target
+After=network.target mysql.service
+Wants=mysql.service
 
 [Service]
 Type=simple
