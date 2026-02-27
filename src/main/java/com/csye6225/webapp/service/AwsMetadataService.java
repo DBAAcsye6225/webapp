@@ -18,8 +18,10 @@ public class AwsMetadataService implements MetadataService {
     private static final String METADATA_BASE = "http://169.254.169.254/latest/meta-data/";
     private static final String TOKEN_URL = "http://169.254.169.254/latest/api/token";
     private static final int TIMEOUT_MS = 2000;
+    private static final int TOKEN_TTL_SECONDS = 21600; // 6 hours (AWS max)
     
     private String cachedToken = null;
+    private long tokenExpiryTime = 0;
     
     @Override
     public MetadataResponse getMetadata() {
@@ -39,12 +41,16 @@ public class AwsMetadataService implements MetadataService {
             return new MetadataResponse("aws", instanceId, region, instanceType, interfaces);
             
         } catch (Exception e) {
+            // Invalidate cached token on failure so next call retries
+            cachedToken = null;
+            tokenExpiryTime = 0;
             throw new MetadataUnavailableException("Failed to retrieve AWS metadata", e);
         }
     }
     
     private String getIMDSv2Token() throws Exception {
-        if (cachedToken != null) {
+        long now = System.currentTimeMillis();
+        if (cachedToken != null && now < tokenExpiryTime) {
             return cachedToken;
         }
         
@@ -53,7 +59,7 @@ public class AwsMetadataService implements MetadataService {
         conn.setRequestMethod("PUT");
         conn.setConnectTimeout(TIMEOUT_MS);
         conn.setReadTimeout(TIMEOUT_MS);
-        conn.setRequestProperty("X-aws-ec2-metadata-token-ttl-seconds", "60");
+        conn.setRequestProperty("X-aws-ec2-metadata-token-ttl-seconds", String.valueOf(TOKEN_TTL_SECONDS));
         conn.setDoOutput(true);
         
         int responseCode = conn.getResponseCode();
@@ -71,6 +77,8 @@ public class AwsMetadataService implements MetadataService {
         }
         
         cachedToken = token.trim();
+        // Expire 5 minutes early to avoid edge cases
+        tokenExpiryTime = System.currentTimeMillis() + ((TOKEN_TTL_SECONDS - 300) * 1000L);
         return cachedToken;
     }
     
