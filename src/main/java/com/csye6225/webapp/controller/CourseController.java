@@ -8,7 +8,9 @@ import com.csye6225.webapp.service.CourseService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
+import jakarta.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +27,9 @@ public class CourseController {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private Validator validator;
 
     /**
      * POST /v1/courses — Create a new course
@@ -44,7 +49,9 @@ public class CourseController {
 
         try {
             CourseResponse response = courseService.createCourse(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .header("Location", "/v1/courses/" + response.getId())
+                    .body(response);
         } catch (IllegalArgumentException e) {
             ErrorResponse error = new ErrorResponse("Conflict", e.getMessage(), httpRequest.getRequestURI());
             return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
@@ -129,8 +136,18 @@ public class CourseController {
                 }
             }
 
-            // Parse and perform update
+            // Parse and validate update request
             CourseUpdateRequest updateRequest = objectMapper.treeToValue(jsonNode, CourseUpdateRequest.class);
+
+            // Manually invoke Bean Validation (bypassed since we didn't use @Valid)
+            Set<ConstraintViolation<CourseUpdateRequest>> violations = validator.validate(updateRequest);
+            if (!violations.isEmpty()) {
+                String errorMessage = violations.iterator().next().getMessage();
+                ErrorResponse error = new ErrorResponse("Validation Error",
+                        errorMessage, httpRequest.getRequestURI());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            }
+
             CourseResponse response = courseService.updateCourse(courseId, updateRequest);
             return ResponseEntity.ok(response);
 
