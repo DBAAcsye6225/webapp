@@ -9,16 +9,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
-<<<<<<< Updated upstream
-=======
 import jakarta.validation.Validator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,8 +33,11 @@ public class CourseController {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private Validator validator;
+
     /**
-     * POST /v1/courses — Create a new course
+     * POST /v1/courses - Create a new course
      */
     @PostMapping
     public ResponseEntity<?> createCourse(
@@ -59,18 +57,11 @@ public class CourseController {
 
         try {
             CourseResponse response = courseService.createCourse(request);
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-=======
-=======
->>>>>>> Stashed changes
             logger.info("Created course {} for departmentCode={} and number={}",
                     response.getId(), response.getDepartmentCode(), response.getNumber());
             return ResponseEntity.status(HttpStatus.CREATED)
                     .header("Location", "/v1/courses/" + response.getId())
                     .body(response);
->>>>>>> Stashed changes
         } catch (IllegalArgumentException e) {
             logger.warn("Rejected course creation for {}: {}", httpRequest.getRequestURI(), e.getMessage());
             ErrorResponse error = new ErrorResponse("Conflict", e.getMessage(), httpRequest.getRequestURI());
@@ -84,7 +75,7 @@ public class CourseController {
     }
 
     /**
-     * GET /v1/courses — List all courses
+     * GET /v1/courses - List all courses
      */
     @GetMapping
     public ResponseEntity<?> getAllCourses() {
@@ -95,7 +86,7 @@ public class CourseController {
     }
 
     /**
-     * GET /v1/courses/{course_id} — Get a single course
+     * GET /v1/courses/{course_id} - Get a single course
      */
     @GetMapping("/{course_id}")
     public ResponseEntity<?> getCourseById(
@@ -115,7 +106,7 @@ public class CourseController {
     }
 
     /**
-     * PUT /v1/courses/{course_id} — Update a course (partial update)
+     * PUT /v1/courses/{course_id} - Update a course (partial update)
      */
     @PutMapping("/{course_id}")
     public ResponseEntity<?> updateCourse(
@@ -166,10 +157,8 @@ public class CourseController {
                 }
             }
 
-            // Parse and perform update
+            // Parse and validate update request
             CourseUpdateRequest updateRequest = objectMapper.treeToValue(jsonNode, CourseUpdateRequest.class);
-<<<<<<< Updated upstream
-=======
 
             // Manually invoke Bean Validation (bypassed since we didn't use @Valid)
             Set<ConstraintViolation<CourseUpdateRequest>> violations = validator.validate(updateRequest);
@@ -181,7 +170,6 @@ public class CourseController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
             }
 
->>>>>>> Stashed changes
             CourseResponse response = courseService.updateCourse(courseId, updateRequest);
             logger.info("Updated course {} successfully", courseId);
             return ResponseEntity.ok(response);
@@ -209,7 +197,7 @@ public class CourseController {
     }
 
     /**
-     * DELETE /v1/courses/{course_id} — Delete a course
+     * DELETE /v1/courses/{course_id} - Delete a course
      */
     @DeleteMapping("/{course_id}")
     public ResponseEntity<?> deleteCourse(
@@ -223,7 +211,7 @@ public class CourseController {
         } catch (RuntimeException e) {
             logger.warn("Failed to delete course {} for {}: {}", courseId, httpRequest.getRequestURI(), e.getMessage());
             if (e instanceof IllegalStateException) {
-                // Course has syllabus attached — must delete syllabus first
+                // Course has syllabus attached - must delete syllabus first
                 ErrorResponse error = new ErrorResponse("Conflict",
                         e.getMessage(), httpRequest.getRequestURI());
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
@@ -232,6 +220,9 @@ public class CourseController {
             ErrorResponse error = new ErrorResponse("Not Found",
                     "Course not found", httpRequest.getRequestURI());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        }
+    }
+}
         }
     }
 }
