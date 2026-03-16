@@ -407,3 +407,5 @@ This project is developed for educational purposes as part of the **CSYE6225 - N
 - ✅ Image build automation configured - builds AMI and GCP images
 - ✅ Test configuration fixed with H2 database - tests run reliably in CI
 - ✅ Terraform infrastructure as code - deploy instances with custom images
+
+A05
