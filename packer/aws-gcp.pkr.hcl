@@ -183,7 +183,7 @@ build {
     only = ["amazon-ebs.webapp"]
     inline = [
       "sudo mkdir -p /opt/aws/amazon-cloudwatch-agent/etc",
-      "sudo cp /tmp/cloudwatch-agent-config.json /opt/aws/amazon-cloudwatch-agent/etc/cloudwatch-agent-config.json",
+      "sudo cp /tmp/cloudwatch-agent-config.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json",
       "rm -f /tmp/cloudwatch-agent-config.json",
       "sudo mkdir -p /var/log/webapp",
       "sudo chown csye6225:csye6225 /var/log/webapp",
