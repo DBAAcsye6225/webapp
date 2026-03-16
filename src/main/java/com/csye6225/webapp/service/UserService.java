@@ -5,6 +5,8 @@ import com.csye6225.webapp.dto.UserResponse;
 import com.csye6225.webapp.dto.UserUpdateRequest;
 import com.csye6225.webapp.entity.User;
 import com.csye6225.webapp.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,8 @@ import java.util.UUID;
 
 @Service
 public class UserService {
+
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
     
     @Autowired
     private UserRepository userRepository;
@@ -28,6 +32,7 @@ public class UserService {
     public UserResponse createUser(UserCreateRequest request) {
         // Check if user already exists
         if (userRepository.existsByUsername(request.getUsername())) {
+            logger.warn("User creation rejected because username={} already exists", request.getUsername());
             throw new IllegalArgumentException("A user with this email address already exists");
         }
         
@@ -39,10 +44,14 @@ public class UserService {
         user.setLastName(request.getLastName());
         
         // Save user
-        User savedUser = userRepository.save(user);
-        
-        // Return response
-        return mapToResponse(savedUser);
+        try {
+            User savedUser = userRepository.save(user);
+            logger.info("Created user account for username={}", savedUser.getUsername());
+            return mapToResponse(savedUser);
+        } catch (RuntimeException e) {
+            logger.error("Failed to create user account for username={}", request.getUsername(), e);
+            throw e;
+        }
     }
     
     /**
@@ -83,7 +92,13 @@ public class UserService {
         }
         
         if (updated) {
-            userRepository.save(user);
+            try {
+                userRepository.save(user);
+                logger.info("Updated user account for username={}", user.getUsername());
+            } catch (RuntimeException e) {
+                logger.error("Failed to update user account for username={}", user.getUsername(), e);
+                throw e;
+            }
         }
     }
     

@@ -5,6 +5,8 @@ import com.csye6225.webapp.entity.Course;
 import com.csye6225.webapp.entity.Syllabus;
 import com.csye6225.webapp.repository.CourseRepository;
 import com.csye6225.webapp.repository.SyllabusRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +17,8 @@ import java.util.UUID;
 
 @Service
 public class SyllabusService {
+
+    private static final Logger logger = LoggerFactory.getLogger(SyllabusService.class);
 
     @Autowired
     private SyllabusRepository syllabusRepository;
@@ -32,15 +36,20 @@ public class SyllabusService {
     public SyllabusResponse uploadSyllabus(UUID courseId, MultipartFile file) throws IOException {
         // 1. Verify course exists
         Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new RuntimeException("Course not found"));
+                .orElseThrow(() -> {
+                    logger.warn("Syllabus upload rejected because courseId={} was not found", courseId);
+                    return new RuntimeException("Course not found");
+                });
 
         // 2. Check if syllabus already exists
         if (syllabusRepository.existsByCourseId(courseId.toString())) {
+            logger.warn("Syllabus upload rejected because courseId={} already has a syllabus", courseId);
             throw new IllegalArgumentException("A syllabus already exists for this course. Delete it before uploading a new one.");
         }
 
         // 3. Validate file
         if (file == null || file.isEmpty()) {
+            logger.warn("Syllabus upload rejected because the file was null or empty for courseId={}", courseId);
             throw new IllegalArgumentException("File must not be null or empty");
         }
 
@@ -56,7 +65,13 @@ public class SyllabusService {
         if (contentType == null || contentType.isBlank()) {
             contentType = "application/octet-stream";
         }
-        String url = s3Service.uploadFile(objectKey, file.getBytes(), contentType);
+        String url;
+        try {
+            url = s3Service.uploadFile(objectKey, file.getBytes(), contentType);
+        } catch (RuntimeException e) {
+            logger.error("Failed to upload syllabus content to S3 for courseId={} and objectKey={}", courseId, objectKey, e);
+            throw e;
+        }
 
         // 6. Create Syllabus entity
         Syllabus syllabus = new Syllabus();
@@ -69,14 +84,19 @@ public class SyllabusService {
         syllabus.setUrl(url);
 
         // 7. Save to database
-        Syllabus savedSyllabus = syllabusRepository.save(syllabus);
+        try {
+            Syllabus savedSyllabus = syllabusRepository.save(syllabus);
 
-        // 8. Update course's hasSyllabus flag
-        course.setHasSyllabus(true);
-        courseRepository.save(course);
+            // 8. Update course's hasSyllabus flag
+            course.setHasSyllabus(true);
+            courseRepository.save(course);
 
-        // 9. Return response
-        return mapToResponse(savedSyllabus);
+            logger.info("Uploaded syllabus {} for courseId={}", savedSyllabus.getId(), courseId);
+            return mapToResponse(savedSyllabus);
+        } catch (RuntimeException e) {
+            logger.error("Failed to persist syllabus metadata for courseId={}", courseId, e);
+            throw e;
+        }
     }
 
     /**
@@ -85,11 +105,19 @@ public class SyllabusService {
     public SyllabusResponse getSyllabus(UUID courseId) {
         // 1. Verify course exists
         courseRepository.findById(courseId)
-                .orElseThrow(() -> new RuntimeException("Course not found"));
+                .orElseThrow(() -> {
+                    logger.warn("Syllabus retrieval rejected because courseId={} was not found", courseId);
+                    return new RuntimeException("Course not found");
+                });
 
         // 2. Find syllabus by courseId
         Syllabus syllabus = syllabusRepository.findByCourseId(courseId.toString())
-                .orElseThrow(() -> new RuntimeException("No syllabus found for this course"));
+                .orElseThrow(() -> {
+                    logger.warn("Syllabus retrieval rejected because no syllabus exists for courseId={}", courseId);
+                    return new RuntimeException("No syllabus found for this course");
+                });
+
+        logger.info("Retrieved syllabus {} for courseId={}", syllabus.getId(), courseId);
 
         return mapToResponse(syllabus);
     }
@@ -101,21 +129,38 @@ public class SyllabusService {
     public void deleteSyllabus(UUID courseId) {
         // 1. Verify course exists
         Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new RuntimeException("Course not found"));
+                .orElseThrow(() -> {
+                    logger.warn("Syllabus deletion rejected because courseId={} was not found", courseId);
+                    return new RuntimeException("Course not found");
+                });
 
         // 2. Find syllabus by courseId
         Syllabus syllabus = syllabusRepository.findByCourseId(courseId.toString())
-                .orElseThrow(() -> new RuntimeException("No syllabus found for this course"));
+                .orElseThrow(() -> {
+                    logger.warn("Syllabus deletion rejected because no syllabus exists for courseId={}", courseId);
+                    return new RuntimeException("No syllabus found for this course");
+                });
 
         // 3. Delete file from S3
-        s3Service.deleteFile(syllabus.getS3ObjectKey());
+        try {
+            s3Service.deleteFile(syllabus.getS3ObjectKey());
+        } catch (RuntimeException e) {
+            logger.error("Failed to delete syllabus content from S3 for courseId={} and objectKey={}", courseId, syllabus.getS3ObjectKey(), e);
+            throw e;
+        }
 
         // 4. Delete syllabus record from database
-        syllabusRepository.delete(syllabus);
+        try {
+            syllabusRepository.delete(syllabus);
 
-        // 5. Update course's hasSyllabus flag
-        course.setHasSyllabus(false);
-        courseRepository.save(course);
+            // 5. Update course's hasSyllabus flag
+            course.setHasSyllabus(false);
+            courseRepository.save(course);
+            logger.info("Deleted syllabus {} for courseId={}", syllabus.getId(), courseId);
+        } catch (RuntimeException e) {
+            logger.error("Failed to delete syllabus metadata for courseId={}", courseId, e);
+            throw e;
+        }
     }
 
     /**

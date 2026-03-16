@@ -5,6 +5,8 @@ import com.csye6225.webapp.dto.CourseResponse;
 import com.csye6225.webapp.dto.CourseUpdateRequest;
 import com.csye6225.webapp.entity.Course;
 import com.csye6225.webapp.repository.CourseRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +19,8 @@ import java.util.stream.Collectors;
 @Service
 public class CourseService {
 
+    private static final Logger logger = LoggerFactory.getLogger(CourseService.class);
+
     @Autowired
     private CourseRepository courseRepository;
 
@@ -27,6 +31,8 @@ public class CourseService {
     public CourseResponse createCourse(CourseCreateRequest request) {
         // Check for duplicate department_code + number
         if (courseRepository.existsByDepartmentCodeAndNumber(request.getDepartmentCode(), request.getNumber())) {
+            logger.warn("Course creation rejected because departmentCode={} and number={} already exist",
+                    request.getDepartmentCode(), request.getNumber());
             throw new IllegalArgumentException("A course with department_code '" + request.getDepartmentCode()
                     + "' and number '" + request.getNumber() + "' already exists");
         }
@@ -42,10 +48,16 @@ public class CourseService {
         course.setPrerequisites(request.getPrerequisites());
 
         // Save course
-        Course savedCourse = courseRepository.save(course);
-
-        // Return response
-        return mapToResponse(savedCourse);
+        try {
+            Course savedCourse = courseRepository.save(course);
+            logger.info("Created course {} for departmentCode={} and number={}",
+                savedCourse.getId(), savedCourse.getDepartmentCode(), savedCourse.getNumber());
+            return mapToResponse(savedCourse);
+        } catch (RuntimeException e) {
+            logger.error("Failed to create course for departmentCode={} and number={}",
+                request.getDepartmentCode(), request.getNumber(), e);
+            throw e;
+        }
     }
 
     /**
@@ -63,7 +75,10 @@ public class CourseService {
      */
     public CourseResponse getCourseById(UUID courseId) {
         Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new RuntimeException("Course not found"));
+                .orElseThrow(() -> {
+                    logger.warn("Course lookup failed because courseId={} was not found", courseId);
+                    return new RuntimeException("Course not found");
+                });
         return mapToResponse(course);
     }
 
@@ -80,7 +95,10 @@ public class CourseService {
     @Transactional
     public CourseResponse updateCourse(UUID courseId, CourseUpdateRequest request) {
         Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new RuntimeException("Course not found"));
+                .orElseThrow(() -> {
+                    logger.warn("Course update rejected because courseId={} was not found", courseId);
+                    return new RuntimeException("Course not found");
+                });
 
         boolean updated = false;
 
@@ -110,7 +128,13 @@ public class CourseService {
         }
 
         if (updated) {
-            course = courseRepository.save(course);
+            try {
+                course = courseRepository.save(course);
+                logger.info("Updated course {} successfully", courseId);
+            } catch (RuntimeException e) {
+                logger.error("Failed to update course {}", courseId, e);
+                throw e;
+            }
         }
 
         return mapToResponse(course);
@@ -122,14 +146,24 @@ public class CourseService {
     @Transactional
     public void deleteCourse(UUID courseId) {
         Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new RuntimeException("Course not found"));
+                .orElseThrow(() -> {
+                    logger.warn("Course deletion rejected because courseId={} was not found", courseId);
+                    return new RuntimeException("Course not found");
+                });
 
         // If course has a syllabus, it must be deleted first
         if (Boolean.TRUE.equals(course.getHasSyllabus())) {
+            logger.warn("Course deletion rejected because courseId={} still has a syllabus attached", courseId);
             throw new IllegalStateException("Cannot delete course: syllabus must be deleted first");
         }
 
-        courseRepository.delete(course);
+        try {
+            courseRepository.delete(course);
+            logger.info("Deleted course {} successfully", courseId);
+        } catch (RuntimeException e) {
+            logger.error("Failed to delete course {}", courseId, e);
+            throw e;
+        }
     }
 
     /**

@@ -153,11 +153,41 @@ build {
     destination = "/tmp/webapp.service"
   }
 
+  # Copy CloudWatch agent config for AWS image only
+  provisioner "file" {
+    only        = ["amazon-ebs.webapp"]
+    source      = "../scripts/cloudwatch-agent-config.json"
+    destination = "/tmp/cloudwatch-agent-config.json"
+  }
+
   # Run setup script
   provisioner "shell" {
     inline = [
       "chmod +x /tmp/setup.sh",
       "sudo /tmp/setup.sh"
+    ]
+  }
+
+  # Install CloudWatch agent on AWS image only
+  provisioner "shell" {
+    only = ["amazon-ebs.webapp"]
+    inline = [
+      "wget https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb",
+      "sudo dpkg -i -E ./amazon-cloudwatch-agent.deb",
+      "rm -f amazon-cloudwatch-agent.deb"
+    ]
+  }
+
+  # Place CloudWatch config and enable service on AWS image only
+  provisioner "shell" {
+    only = ["amazon-ebs.webapp"]
+    inline = [
+      "sudo mkdir -p /opt/aws/amazon-cloudwatch-agent/etc",
+      "sudo cp /tmp/cloudwatch-agent-config.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json",
+      "rm -f /tmp/cloudwatch-agent-config.json",
+      "sudo mkdir -p /var/log/webapp",
+      "sudo chown csye6225:csye6225 /var/log/webapp",
+      "sudo systemctl enable amazon-cloudwatch-agent"
     ]
   }
 
@@ -177,6 +207,7 @@ build {
       "sudo rm -f /tmp/webapp.jar",
       "sudo rm -f /tmp/setup.sh",
       "sudo rm -f /tmp/webapp.service",
+      "sudo rm -f /tmp/cloudwatch-agent-config.json",
       "echo '[INFO] Cleanup completed'"
     ]
   }
