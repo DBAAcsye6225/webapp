@@ -223,6 +223,3 @@ public class CourseController {
         }
     }
 }
-        }
-    }
-}

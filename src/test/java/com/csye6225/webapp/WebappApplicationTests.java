@@ -41,7 +41,7 @@ class WebappApplicationTests {
     private static final String testPassword = "secureP@ssw0rd";
     private static final String newPassword = "newP@ssw0rd123";
 
-    // ==================== Health Check API Tests ====================
+    // ----- Health Check API Tests -----
 
     @Test
     @Order(1)
@@ -101,7 +101,7 @@ class WebappApplicationTests {
                 .andExpect(status().isMethodNotAllowed());
     }
 
-    // ==================== User Creation API Tests ====================
+    // ----- User Creation API Tests -----
 
     @Test
     @Order(8)
@@ -198,7 +198,7 @@ class WebappApplicationTests {
                 .andExpect(status().isUnsupportedMediaType());
     }
 
-    // ==================== Get User Info API Tests ====================
+    // ----- Get User Info API Tests -----
 
     @Test
     @Order(14)
@@ -229,7 +229,7 @@ class WebappApplicationTests {
                 .andExpect(status().isNotFound());
     }
 
-    // ==================== Update User Info API Tests ====================
+    // ----- Update User Info API Tests -----
 
     @Test
     @Order(17)
@@ -380,7 +380,7 @@ class WebappApplicationTests {
                 .andExpect(status().isUnsupportedMediaType());
     }
 
-     // ==================== Demo: Intentional Failure ====================
+    // ----- Demo: Intentional Failure -----
     // @Test
     // @Order(27)
     // @DisplayName("Demo: Intentional test failure to demonstrate branch protection")
