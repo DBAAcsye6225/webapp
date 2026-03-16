@@ -98,6 +98,12 @@ echo "[INFO] Creating application directory..."
 sudo mkdir -p ${APP_DIR}
 
 # ---------------------------------------------------------
+# 7.5 Create application log directory
+# ---------------------------------------------------------
+echo "[INFO] Creating application log directory..."
+sudo mkdir -p /var/log/webapp
+
+# ---------------------------------------------------------
 # 8. Copy Application JAR (Packer will provide this file)
 # ---------------------------------------------------------
 # Note: The JAR file should be present in /tmp/ when this script runs
@@ -117,6 +123,8 @@ fi
 echo "[INFO] Setting file permissions..."
 sudo chown -R ${APP_USER}:${APP_GROUP} ${APP_DIR}
 sudo chmod -R 750 ${APP_DIR}
+sudo chown -R ${APP_USER}:${APP_GROUP} /var/log/webapp
+sudo chmod -R 750 /var/log/webapp
 
 echo "[INFO] Application setup completed successfully!"
 

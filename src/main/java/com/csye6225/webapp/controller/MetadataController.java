@@ -5,6 +5,8 @@ import com.csye6225.webapp.model.MetadataResponse;
 import com.csye6225.webapp.service.AwsMetadataService;
 import com.csye6225.webapp.service.CloudPlatformDetector;
 import com.csye6225.webapp.service.GcpMetadataService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/v1")
 public class MetadataController {
+
+    private static final Logger logger = LoggerFactory.getLogger(MetadataController.class);
     
     @Autowired
     private CloudPlatformDetector platformDetector;
@@ -30,9 +34,11 @@ public class MetadataController {
     public ResponseEntity<?> getMetadata(
             HttpServletRequest request,
             @RequestParam(required = false) Map<String, String> params) {
+        logger.info("Received {} request for {}", request.getMethod(), request.getRequestURI());
         
         // Validate no query parameters
         if (params != null && !params.isEmpty()) {
+            logger.warn("Rejected metadata request for {} because query parameters are not allowed", request.getRequestURI());
             return ResponseEntity
                     .badRequest()
                     .header("Cache-Control", "no-cache, no-store, must-revalidate")
@@ -50,6 +56,7 @@ public class MetadataController {
             }
             
             if (bodyContent.length() > 0) {
+                logger.warn("Rejected metadata request for {} because a request body was provided", request.getRequestURI());
                 return ResponseEntity
                         .badRequest()
                         .header("Cache-Control", "no-cache, no-store, must-revalidate")
@@ -65,6 +72,7 @@ public class MetadataController {
             String platform = platformDetector.detectPlatform();
             
             if (platform == null) {
+                logger.warn("Metadata service unavailable for {} because no supported platform was detected", request.getRequestURI());
                 // Not running on a supported cloud platform
                 return ResponseEntity
                         .status(HttpStatus.SERVICE_UNAVAILABLE)
@@ -82,6 +90,7 @@ public class MetadataController {
             } else {
                 throw new MetadataUnavailableException("Unknown platform: " + platform);
             }
+            logger.info("Retrieved metadata successfully for platform={}", platform);
             
             return ResponseEntity
                     .ok()
@@ -90,6 +99,7 @@ public class MetadataController {
                     .body(metadata);
                     
         } catch (MetadataUnavailableException e) {
+                    logger.warn("Metadata request failed for {}: {}", request.getRequestURI(), e.getMessage());
             return ResponseEntity
                     .status(HttpStatus.SERVICE_UNAVAILABLE)
                     .header("Cache-Control", "no-cache, no-store, must-revalidate")
@@ -107,7 +117,8 @@ public class MetadataController {
             RequestMethod.HEAD,
             RequestMethod.OPTIONS
     })
-    public ResponseEntity<?> handleInvalidMethods() {
+    public ResponseEntity<?> handleInvalidMethods(HttpServletRequest request) {
+        logger.warn("Rejected unsupported {} request for {}", request.getMethod(), request.getRequestURI());
         return ResponseEntity
                 .status(HttpStatus.METHOD_NOT_ALLOWED)
                 .header("Cache-Control", "no-cache, no-store, must-revalidate")
