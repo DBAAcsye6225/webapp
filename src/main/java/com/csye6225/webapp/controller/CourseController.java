@@ -15,6 +15,9 @@ import jakarta.validation.Valid;
 import jakarta.validation.Validator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -57,8 +60,11 @@ public class CourseController {
         try {
             CourseResponse response = courseService.createCourse(request);
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 =======
+=======
+>>>>>>> Stashed changes
             logger.info("Created course {} for departmentCode={} and number={}",
                     response.getId(), response.getDepartmentCode(), response.getNumber());
             return ResponseEntity.status(HttpStatus.CREATED)
