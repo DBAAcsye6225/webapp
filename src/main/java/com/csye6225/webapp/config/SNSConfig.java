@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sns.SnsClient;
 import software.amazon.awssdk.services.sns.model.PublishRequest;
 
@@ -16,9 +17,14 @@ public class SNSConfig {
     @Value("${aws.sns.topic-arn:}")
     private String topicArn;
 
+    @Value("${aws.region:us-east-1}")
+    private String awsRegion;
+
     @Bean
     public SnsClient snsClient() {
-        return SnsClient.builder().build();
+        return SnsClient.builder()
+                .region(Region.of(awsRegion))
+                .build();
     }
 
     public String getTopicArn() {
