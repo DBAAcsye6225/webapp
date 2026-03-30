@@ -103,6 +103,11 @@
 			<artifactId>sts</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>sns</artifactId>
+			<version>2.25.70</version>
+		</dependency>
+		<dependency>
 			<groupId>io.micrometer</groupId>
 			<artifactId>micrometer-registry-statsd</artifactId>
 		</dependency>

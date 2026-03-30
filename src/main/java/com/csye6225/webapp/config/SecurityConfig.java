@@ -68,6 +68,7 @@ public class SecurityConfig {
                 .requestMatchers("/healthz").permitAll()
                 .requestMatchers("/v1/metadata").permitAll()
                 .requestMatchers(HttpMethod.POST, "/v1/user").permitAll()
+                .requestMatchers(HttpMethod.GET, "/v1/user/validateEmail").permitAll()
                 .requestMatchers("/v1/metadata").permitAll()
                 .requestMatchers("/v1/user/self").authenticated()
                 .requestMatchers("/v1/courses/**").authenticated()

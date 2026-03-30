@@ -1,17 +1,24 @@
 package com.csye6225.webapp.service;
 
+import com.csye6225.webapp.config.SNSConfig;
 import com.csye6225.webapp.dto.UserCreateRequest;
 import com.csye6225.webapp.dto.UserResponse;
 import com.csye6225.webapp.dto.UserUpdateRequest;
 import com.csye6225.webapp.entity.User;
 import com.csye6225.webapp.repository.UserRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import software.amazon.awssdk.services.sns.SnsClient;
 
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,6 +29,15 @@ public class UserService {
     
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private SnsClient snsClient;
+
+    @Autowired
+    private SNSConfig snsConfig;
+
+    @Autowired
+    private ObjectMapper objectMapper;
     
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     
@@ -46,6 +62,14 @@ public class UserService {
         // Save user
         try {
             User savedUser = userRepository.save(user);
+
+            String token = UUID.randomUUID().toString();
+            savedUser.setVerificationToken(token);
+            savedUser.setVerificationTokenExpiry(LocalDateTime.now().plusMinutes(1));
+            savedUser = userRepository.save(savedUser);
+
+            publishVerificationMessage(savedUser);
+
             logger.info("Created user account for username={}", savedUser.getUsername());
             return mapToResponse(savedUser);
         } catch (RuntimeException e) {
@@ -108,6 +132,58 @@ public class UserService {
     public boolean verifyPassword(User user, String rawPassword) {
         return passwordEncoder.matches(rawPassword, user.getPassword());
     }
+
+    private void publishVerificationMessage(User user) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("email", user.getUsername());
+        payload.put("firstName", user.getFirstName());
+        payload.put("lastName", user.getLastName());
+        payload.put("token", user.getVerificationToken());
+        payload.put("tokenExpiry", user.getVerificationTokenExpiry());
+
+        try {
+            String message = objectMapper.writeValueAsString(payload);
+            snsConfig.publishMessage(snsClient, snsConfig.getTopicArn(), message);
+            logger.info("Published verification SNS message for username={}", user.getUsername());
+        } catch (JsonProcessingException e) {
+            logger.error("Failed to serialize verification SNS payload for username={}", user.getUsername(), e);
+        } catch (Exception e) {
+            logger.error("Failed to publish verification SNS message for username={}", user.getUsername(), e);
+        }
+    }
+
+    @Transactional
+    public String verifyEmail(String email, String token) {
+        Optional<User> userOpt = userRepository.findByUsername(email);
+        if (userOpt.isEmpty()) {
+            logger.warn("Email verification failed: user not found for email={}", email);
+            return "User not found";
+        }
+
+        User user = userOpt.get();
+
+        if (user.isVerified()) {
+            logger.info("Email verification skipped: already verified for email={}", email);
+            return "Already verified";
+        }
+
+        if (user.getVerificationToken() == null || !user.getVerificationToken().equals(token)) {
+            logger.warn("Email verification failed: invalid token for email={}", email);
+            return "Invalid token";
+        }
+
+        if (user.getVerificationTokenExpiry() == null || user.getVerificationTokenExpiry().isBefore(LocalDateTime.now())) {
+            logger.warn("Email verification failed: token expired for email={}", email);
+            return "Token expired";
+        }
+
+        user.setVerified(true);
+        user.setVerificationToken(null);
+        user.setVerificationTokenExpiry(null);
+        userRepository.save(user);
+        logger.info("Email verification succeeded for email={}", email);
+        return "Email verified successfully";
+    }
     
     /**
      * Convert User entity to UserResponse
@@ -118,6 +194,7 @@ public class UserService {
             user.getUsername(),
             user.getFirstName(),
             user.getLastName(),
+            user.isVerified(),
             user.getAccountCreated(),
             user.getAccountUpdated()
         );
