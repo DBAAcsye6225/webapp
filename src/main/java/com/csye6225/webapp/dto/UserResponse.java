@@ -18,6 +18,9 @@ public class UserResponse {
     
     @JsonProperty("last_name")
     private String lastName;
+
+    @JsonProperty("verified")
+    private boolean verified;
     
     // Fix: Match format 2024-01-15T10:30:00.000Z
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
@@ -32,12 +35,13 @@ public class UserResponse {
     // Constructors
     public UserResponse() {}
     
-    public UserResponse(UUID id, String username, String firstName, String lastName, 
-                       LocalDateTime accountCreated, LocalDateTime accountUpdated) {
+    public UserResponse(UUID id, String username, String firstName, String lastName,
+                       boolean verified, LocalDateTime accountCreated, LocalDateTime accountUpdated) {
         this.id = id;
         this.username = username;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.verified = verified;
         this.accountCreated = accountCreated;
         this.accountUpdated = accountUpdated;
     }
@@ -51,6 +55,8 @@ public class UserResponse {
     public void setFirstName(String firstName) { this.firstName = firstName; }
     public String getLastName() { return lastName; }
     public void setLastName(String lastName) { this.lastName = lastName; }
+    public boolean isVerified() { return verified; }
+    public void setVerified(boolean verified) { this.verified = verified; }
     public LocalDateTime getAccountCreated() { return accountCreated; }
     public void setAccountCreated(LocalDateTime accountCreated) { this.accountCreated = accountCreated; }
     public LocalDateTime getAccountUpdated() { return accountUpdated; }

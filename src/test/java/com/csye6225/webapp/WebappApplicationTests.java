@@ -3,6 +3,8 @@ package com.csye6225.webapp;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.csye6225.webapp.dto.UserCreateRequest;
 import com.csye6225.webapp.dto.UserUpdateRequest;
+import com.csye6225.webapp.entity.User;
+import com.csye6225.webapp.repository.UserRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -16,6 +18,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.fail;
+
+import java.time.LocalDateTime;
 
 @SpringBootTest(properties = {
     "spring.datasource.url=jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
@@ -35,6 +39,9 @@ class WebappApplicationTests {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private UserRepository userRepository;
 
     private static final String BASE_URL = "";
     private static String testEmail = "jane.doe" + System.currentTimeMillis() + "@example.com";
@@ -125,6 +132,8 @@ class WebappApplicationTests {
                 .andExpect(jsonPath("$.account_created").exists())
                 .andExpect(jsonPath("$.account_updated").exists())
                 .andExpect(jsonPath("$.password").doesNotExist());
+
+        setUserVerified(testEmail, true);
     }
 
     @Test
@@ -380,6 +389,70 @@ class WebappApplicationTests {
                 .andExpect(status().isUnsupportedMediaType());
     }
 
+    @Test
+    @Order(29)
+    @DisplayName("5.1 Unverified user gets 403 on protected endpoint")
+    void testUnverifiedUserForbiddenOnProtectedEndpoint() throws Exception {
+        String email = uniqueEmail("unverified-user");
+        String password = "secureP@ssw0rd";
+        createUser(email, password, false);
+
+        mockMvc.perform(get("/v1/user/self")
+                .header("Authorization", getBasicAuthHeader(email, password)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Order(30)
+    @DisplayName("5.2 validateEmail returns 200 with correct token")
+    void testValidateEmailSuccess() throws Exception {
+        String email = uniqueEmail("validate-ok");
+        String password = "secureP@ssw0rd";
+        createUser(email, password, false);
+
+        User user = getUserByUsername(email);
+
+        mockMvc.perform(get("/v1/user/validateEmail")
+                .param("email", email)
+                .param("token", user.getVerificationToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Email verified successfully"));
+    }
+
+    @Test
+    @Order(31)
+    @DisplayName("5.3 validateEmail returns 400 with invalid token")
+    void testValidateEmailInvalidToken() throws Exception {
+        String email = uniqueEmail("validate-invalid");
+        String password = "secureP@ssw0rd";
+        createUser(email, password, false);
+
+        mockMvc.perform(get("/v1/user/validateEmail")
+                .param("email", email)
+                .param("token", "not-a-valid-token"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid token"));
+    }
+
+    @Test
+    @Order(32)
+    @DisplayName("5.4 validateEmail returns 400 with expired token")
+    void testValidateEmailExpiredToken() throws Exception {
+        String email = uniqueEmail("validate-expired");
+        String password = "secureP@ssw0rd";
+        createUser(email, password, false);
+
+        User user = getUserByUsername(email);
+        user.setVerificationTokenExpiry(LocalDateTime.now().minusMinutes(1));
+        userRepository.save(user);
+
+        mockMvc.perform(get("/v1/user/validateEmail")
+                .param("email", email)
+                .param("token", user.getVerificationToken()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Token expired"));
+    }
+
     // ----- Demo: Intentional Failure -----
     // @Test
     // @Order(27)
@@ -392,5 +465,37 @@ class WebappApplicationTests {
     private String getBasicAuthHeader(String username, String password) {
         String auth = username + ":" + password;
         return "Basic " + java.util.Base64.getEncoder().encodeToString(auth.getBytes());
+    }
+
+    private String uniqueEmail(String prefix) {
+        return prefix + "." + System.nanoTime() + "@example.com";
+    }
+
+    private void createUser(String email, String password, boolean markVerified) throws Exception {
+        UserCreateRequest request = new UserCreateRequest();
+        request.setUsername(email);
+        request.setPassword(password);
+        request.setFirstName("Test");
+        request.setLastName("User");
+
+        mockMvc.perform(post("/v1/user")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated());
+
+        if (markVerified) {
+            setUserVerified(email, true);
+        }
+    }
+
+    private void setUserVerified(String email, boolean verified) {
+        User user = getUserByUsername(email);
+        user.setVerified(verified);
+        userRepository.save(user);
+    }
+
+    private User getUserByUsername(String email) {
+        return userRepository.findByUsername(email)
+                .orElseThrow(() -> new IllegalStateException("Test user not found: " + email));
     }
 }

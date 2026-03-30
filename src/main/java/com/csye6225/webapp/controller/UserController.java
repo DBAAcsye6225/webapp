@@ -20,8 +20,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 @RestController
@@ -157,5 +159,24 @@ public class UserController {
             ErrorResponse error = new ErrorResponse("Bad Request", "Invalid JSON format", httpRequest.getRequestURI());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
         }
+    }
+
+    @GetMapping("/validateEmail")
+    public ResponseEntity<?> validateEmail(
+            @RequestParam("email") String email,
+            @RequestParam("token") String token,
+            HttpServletRequest httpRequest) {
+        logger.info("Received {} request for {} with email={}", httpRequest.getMethod(), httpRequest.getRequestURI(), email);
+
+        String result = userService.verifyEmail(email, token);
+        Map<String, String> response = new LinkedHashMap<>();
+        response.put("message", result);
+
+        if ("Email verified successfully".equals(result) || "Already verified".equals(result)) {
+            return ResponseEntity.ok(response);
+        }
+
+        ErrorResponse error = new ErrorResponse("Bad Request", result, httpRequest.getRequestURI());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 }

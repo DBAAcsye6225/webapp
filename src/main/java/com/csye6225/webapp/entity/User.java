@@ -42,6 +42,12 @@ public class User {
     // This column determines if the user is enabled/verified.
     @Column(name = "verified", nullable = false)
     private boolean verified;
+
+    @Column(name = "verification_token")
+    private String verificationToken;
+
+    @Column(name = "verification_token_expiry")
+    private LocalDateTime verificationTokenExpiry;
     
     @Column(name = "account_created", nullable = false, updatable = false)
     @JsonProperty("account_created")
@@ -55,9 +61,7 @@ public class User {
     protected void onCreate() {
         accountCreated = LocalDateTime.now();
         accountUpdated = LocalDateTime.now();
-        // Default to TRUE so created users can login immediately.
-        // Update this to FALSE manually in database to test 403.
-        this.verified = true; 
+        this.verified = false;
     }
     
     @PreUpdate
@@ -114,6 +118,22 @@ public class User {
 
     public void setVerified(boolean verified) {
         this.verified = verified;
+    }
+
+    public String getVerificationToken() {
+        return verificationToken;
+    }
+
+    public void setVerificationToken(String verificationToken) {
+        this.verificationToken = verificationToken;
+    }
+
+    public LocalDateTime getVerificationTokenExpiry() {
+        return verificationTokenExpiry;
+    }
+
+    public void setVerificationTokenExpiry(LocalDateTime verificationTokenExpiry) {
+        this.verificationTokenExpiry = verificationTokenExpiry;
     }
 
     public LocalDateTime getAccountCreated() {
