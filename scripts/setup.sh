@@ -27,7 +27,16 @@ echo "[INFO] Upgrading installed packages..."
 sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
 
 # ---------------------------------------------------------
-# 2. Install Java 21 (OpenJDK)
+# 2. Install AWS CLI v2
+# ---------------------------------------------------------
+echo "[INFO] Installing AWS CLI v2..."
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y curl unzip
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
+cd /tmp && unzip -q awscliv2.zip && sudo ./aws/install
+aws --version
+
+# ---------------------------------------------------------
+# 3. Install Java 21 (OpenJDK)
 # ---------------------------------------------------------
 echo "[INFO] Installing Java 21..."
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y openjdk-21-jdk
@@ -36,7 +45,7 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get install -y openjdk-21-jdk
 java -version
 
 # ---------------------------------------------------------
-# 2.5 Install Java 17 (OpenJDK)
+# 3.5 Install Java 17 (OpenJDK)
 # ---------------------------------------------------------
 echo "Installing Java 17..."
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y openjdk-17-jdk
@@ -45,7 +54,7 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get install -y openjdk-17-jdk
 java -version
 
 # ---------------------------------------------------------
-# 3. Install MySQL Server
+# 4. Install MySQL Server
 # ---------------------------------------------------------
 echo "[INFO] Installing MySQL Server..."
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server

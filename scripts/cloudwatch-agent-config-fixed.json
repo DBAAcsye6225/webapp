@@ -1,0 +1,38 @@
+{
+  "agent": {
+    "metrics_collection_interval": 10,
+    "logfile": "/var/log/amazon/amazon-cloudwatch-agent/amazon-cloudwatch-agent.log",
+    "debug": true
+  },
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/var/log/webapp/webapp.log",
+            "log_group_name": "webapp-logs",
+            "log_stream_name": "{instance_id}",
+            "timestamp_format": "%Y-%m-%d %H:%M:%S"
+          }
+        ]
+      }
+    }
+  },
+  "metrics": {
+    "namespace": "webapp",
+    "metrics_collected": {
+      "statsd": {
+        "service_address": "127.0.0.1:8125",
+        "metrics_collection_interval": 10,
+        "metrics_aggregation_interval": 60,
+        "metrics_collection_timeout": 5,
+        "metrics_emitted_per_mtu": 1000
+      }
+    },
+    "force_flush_interval": 5,
+    "append_dimensions": {
+      "InstanceId": "${aws:InstanceId}",
+      "ImageId": "${aws:ImageId}"
+    }
+  }
+}
