@@ -67,6 +67,13 @@ public class HealthCheckController {
                     .build();
         }
     }
+
+    @GetMapping("/healthz1234")
+    public ResponseEntity<Void> healthCheck1234(
+            @RequestBody(required = false) String body,
+            HttpServletRequest request) {
+        return healthCheck(body, request);
+    }
     
     @RequestMapping(value = "/healthz", method = {RequestMethod.POST, RequestMethod.PUT, 
                     RequestMethod.DELETE, RequestMethod.PATCH, RequestMethod.HEAD, RequestMethod.OPTIONS})
@@ -77,5 +84,11 @@ public class HealthCheckController {
                 .header("Pragma", "no-cache")
                 .header("X-Content-Type-Options", "nosniff")
                 .build();
+    }
+
+    @RequestMapping(value = "/healthz1234", method = {RequestMethod.POST, RequestMethod.PUT,
+                    RequestMethod.DELETE, RequestMethod.PATCH, RequestMethod.HEAD, RequestMethod.OPTIONS})
+    public ResponseEntity<Void> healthCheck1234NotAllowed(HttpServletRequest request) {
+        return healthCheckNotAllowed(request);
     }
 }
