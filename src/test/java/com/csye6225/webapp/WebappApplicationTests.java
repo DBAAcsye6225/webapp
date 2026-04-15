@@ -64,7 +64,7 @@ class WebappApplicationTests {
     @Order(33)
     @DisplayName("1.1.1 GET /healthz - Service is healthy and database connection is successful")
     void testHealthCheckSuccess1234() throws Exception {
-        mockMvc.perform(get("/healthz"))
+        mockMvc.perform(get("/healthz1234"))
                 .andExpect(status().isOk())
                 .andExpect(header().exists("Cache-Control"))
                 .andExpect(content().string(""));
@@ -118,10 +118,58 @@ class WebappApplicationTests {
                 .andExpect(status().isMethodNotAllowed());
     }
 
+    @Test
+    @Order(8)
+    @DisplayName("1.8 GET /healthz1234 - Bad Request - request contains query parameters")
+    void testHealthCheck1234WithQueryParams() throws Exception {
+        mockMvc.perform(get("/healthz1234?test=123"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @Order(9)
+    @DisplayName("1.9 POST /healthz1234 - Method Not Allowed")
+    void testHealthCheck1234PostNotAllowed() throws Exception {
+        mockMvc.perform(post("/healthz1234"))
+                .andExpect(status().isMethodNotAllowed());
+    }
+
+    @Test
+    @Order(10)
+    @DisplayName("1.10 PUT /healthz1234 - Method Not Allowed")
+    void testHealthCheck1234PutNotAllowed() throws Exception {
+        mockMvc.perform(put("/healthz1234"))
+                .andExpect(status().isMethodNotAllowed());
+    }
+
+    @Test
+    @Order(11)
+    @DisplayName("1.11 DELETE /healthz1234 - Method Not Allowed")
+    void testHealthCheck1234DeleteNotAllowed() throws Exception {
+        mockMvc.perform(delete("/healthz1234"))
+                .andExpect(status().isMethodNotAllowed());
+    }
+
+    @Test
+    @Order(12)
+    @DisplayName("1.12 HEAD /healthz1234 - Method Not Allowed")
+    void testHealthCheck1234HeadNotAllowed() throws Exception {
+        mockMvc.perform(head("/healthz1234"))
+                .andExpect(status().isMethodNotAllowed());
+    }
+
+    @Test
+    @Order(13)
+    @DisplayName("1.13 OPTIONS /healthz1234 - Method Not Allowed")
+    void testHealthCheck1234OptionsNotAllowed() throws Exception {
+        mockMvc.perform(options("/healthz1234"))
+                .andExpect(status().isMethodNotAllowed());
+    }
+
     // ----- User Creation API Tests -----
 
     @Test
-    @Order(8)
+    @Order(14)
     @DisplayName("2.1 User created successfully")
     void testCreateUserSuccess() throws Exception {
         UserCreateRequest request = new UserCreateRequest();
@@ -147,7 +195,7 @@ class WebappApplicationTests {
     }
 
     @Test
-    @Order(9)
+    @Order(15)
     @DisplayName("2.2 Create User - Invalid email format")
     void testCreateUserInvalidEmail() throws Exception {
         UserCreateRequest request = new UserCreateRequest();
@@ -163,7 +211,7 @@ class WebappApplicationTests {
     }
 
     @Test
-    @Order(10)
+    @Order(16)
     @DisplayName("2.3 Create User - Missing required fields")
     void testCreateUserMissingFields() throws Exception {
         String jsonWithMissingField = "{\"last_name\":\"Doe\",\"username\":\"" + testEmail + "\",\"password\":\"" + testPassword + "\"}";
@@ -175,7 +223,7 @@ class WebappApplicationTests {
     }
 
     @Test
-    @Order(11)
+    @Order(17)
     @DisplayName("2.4 Create User - Password Too Weak")
     void testCreateUserWeakPassword() throws Exception {
         UserCreateRequest request = new UserCreateRequest();
@@ -191,7 +239,7 @@ class WebappApplicationTests {
     }
 
     @Test
-    @Order(12)
+    @Order(18)
     @DisplayName("2.5 Conflict - User with this email already exists")
     void testCreateUserDuplicateEmail() throws Exception {
         UserCreateRequest request = new UserCreateRequest();
@@ -208,7 +256,7 @@ class WebappApplicationTests {
     }
 
     @Test
-    @Order(13)
+    @Order(19)
     @DisplayName("2.6 Create User - Content-Type must be application/json")
     void testCreateUserWrongContentType() throws Exception {
         mockMvc.perform(post("/v1/user")
@@ -220,7 +268,7 @@ class WebappApplicationTests {
     // ----- Get User Info API Tests -----
 
     @Test
-    @Order(14)
+    @Order(20)
     @DisplayName("3.1 Get User - User information retrieved successfully")
     void testGetUserSuccess() throws Exception {
         mockMvc.perform(get("/v1/user/self")
@@ -232,7 +280,7 @@ class WebappApplicationTests {
     }
 
     @Test
-    @Order(15)
+    @Order(21)
     @DisplayName("3.2 Get User - Missing or invalid authentication credentials")
     void testGetUserNoAuth() throws Exception {
         mockMvc.perform(get("/v1/user/self"))
@@ -240,7 +288,7 @@ class WebappApplicationTests {
     }
 
     @Test
-    @Order(16)
+    @Order(22)
     @DisplayName("3.4 Get User - User account not found")
     void testGetUserNotFound() throws Exception {
         mockMvc.perform(get("/v1/user/self")
@@ -251,7 +299,7 @@ class WebappApplicationTests {
     // ----- Update User Info API Tests -----
 
     @Test
-    @Order(17)
+    @Order(23)
     @DisplayName("4.1 User updated successfully - no content returned")
     void testUpdateUserSuccess() throws Exception {
         UserUpdateRequest request = new UserUpdateRequest();
@@ -266,7 +314,7 @@ class WebappApplicationTests {
     }
 
     @Test
-    @Order(18)
+    @Order(24)
     @DisplayName("4.2 Verify Update - First name and Last name")
     void testVerifyUserUpdate() throws Exception {
         mockMvc.perform(get("/v1/user/self")
@@ -277,7 +325,7 @@ class WebappApplicationTests {
     }
 
     @Test
-    @Order(19)
+    @Order(25)
     @DisplayName("4.3 Update User - Only First Name")
     void testUpdateUserPartial() throws Exception {
         UserUpdateRequest request = new UserUpdateRequest();
@@ -291,7 +339,7 @@ class WebappApplicationTests {
     }
 
     @Test
-    @Order(20)
+    @Order(26)
     @DisplayName("4.4 Update Password")
     void testUpdatePassword() throws Exception {
         UserUpdateRequest request = new UserUpdateRequest();
@@ -305,7 +353,7 @@ class WebappApplicationTests {
     }
 
     @Test
-    @Order(21)
+    @Order(27)
     @DisplayName("4.5 Get User - New Password")
     void testGetUserWithNewPassword() throws Exception {
         mockMvc.perform(get("/v1/user/self")
@@ -314,7 +362,7 @@ class WebappApplicationTests {
     }
 
     @Test
-    @Order(22)
+    @Order(28)
     @DisplayName("4.6 Get User - Old Password (Should Fail)")
     void testGetUserWithOldPassword() throws Exception {
         mockMvc.perform(get("/v1/user/self")
@@ -323,7 +371,7 @@ class WebappApplicationTests {
     }
 
     @Test
-    @Order(23)
+    @Order(29)
     @DisplayName("4.7 Update User - Try to update username (read-only field)")
     void testUpdateUserReadOnlyUsername() throws Exception {
         String jsonWithUsername = "{\"username\":\"newemail@example.com\"}";
@@ -337,7 +385,7 @@ class WebappApplicationTests {
     }
 
     @Test
-    @Order(24)
+    @Order(30)
     @DisplayName("4.8 Update User - Try ID (Disallowed)")
     void testUpdateUserReadOnlyId() throws Exception {
         String jsonWithId = "{\"id\":\"00000000-0000-0000-0000-000000000000\"}";
@@ -350,7 +398,7 @@ class WebappApplicationTests {
     }
 
     @Test
-    @Order(25)
+    @Order(31)
     @DisplayName("4.9 Update User - Try account_created")
     void testUpdateUserReadOnlyAccountCreated() throws Exception {
         String jsonWithAccountCreated = "{\"account_created\":\"2020-01-01T00:00:00.000Z\"}";
@@ -363,7 +411,7 @@ class WebappApplicationTests {
     }
 
     @Test
-    @Order(26)
+    @Order(32)
     @DisplayName("4.10 Update User - Try account_updated")
     void testUpdateUserReadOnlyAccountUpdated() throws Exception {
         String jsonWithAccountUpdated = "{\"account_updated\":\"2020-01-01T00:00:00.000Z\"}";
@@ -376,7 +424,7 @@ class WebappApplicationTests {
     }
 
     @Test
-    @Order(27)
+    @Order(33)
     @DisplayName("4.11 Update User - Missing or invalid authentication credentials")
     void testUpdateUserNoAuth() throws Exception {
         UserUpdateRequest request = new UserUpdateRequest();
@@ -389,7 +437,7 @@ class WebappApplicationTests {
     }
 
     @Test
-    @Order(28)
+    @Order(34)
     @DisplayName("4.12 Update User - Wrong Content-Type")
     void testUpdateUserWrongContentType() throws Exception {
         mockMvc.perform(put("/v1/user/self")
@@ -400,7 +448,7 @@ class WebappApplicationTests {
     }
 
     @Test
-    @Order(29)
+    @Order(35)
     @DisplayName("5.1 Unverified user gets 403 on protected endpoint")
     void testUnverifiedUserForbiddenOnProtectedEndpoint() throws Exception {
         String email = uniqueEmail("unverified-user");
@@ -413,7 +461,7 @@ class WebappApplicationTests {
     }
 
     @Test
-    @Order(30)
+    @Order(36)
     @DisplayName("5.2 validateEmail returns 200 with correct token")
     void testValidateEmailSuccess() throws Exception {
         String email = uniqueEmail("validate-ok");
@@ -430,7 +478,7 @@ class WebappApplicationTests {
     }
 
     @Test
-    @Order(31)
+    @Order(37)
     @DisplayName("5.3 validateEmail returns 400 with invalid token")
     void testValidateEmailInvalidToken() throws Exception {
         String email = uniqueEmail("validate-invalid");
@@ -445,7 +493,7 @@ class WebappApplicationTests {
     }
 
     @Test
-    @Order(32)
+    @Order(38)
     @DisplayName("5.4 validateEmail returns 400 with expired token")
     void testValidateEmailExpiredToken() throws Exception {
         String email = uniqueEmail("validate-expired");
