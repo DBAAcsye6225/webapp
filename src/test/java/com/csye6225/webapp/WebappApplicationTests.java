@@ -61,6 +61,16 @@ class WebappApplicationTests {
     }
 
     @Test
+    @Order(33)
+    @DisplayName("1.1.1 GET /healthz - Service is healthy and database connection is successful")
+    void testHealthCheckSuccess1234() throws Exception {
+        mockMvc.perform(get("/healthz"))
+                .andExpect(status().isOk())
+                .andExpect(header().exists("Cache-Control"))
+                .andExpect(content().string(""));
+    }
+
+    @Test
     @Order(2)
     @DisplayName("1.2 GET /healthz - Bad Request - request contains query parameters")
     void testHealthCheckWithQueryParams() throws Exception {
